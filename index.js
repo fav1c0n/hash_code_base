@@ -22,7 +22,7 @@ class Photo {
   }
 }
 
-const file = files[process.argv.length > 2 ? parseInt(process.argv[2]) : 1];
+const file = files[process.argv.length > 2 ? parseInt(process.argv[2]) : 0];
 
 const lineReader = createInterface({
   input: createReadStream(`input/${file}.txt`)
@@ -85,9 +85,9 @@ function getSlides(photos) { // lista de fotos devuelvo lista de slides
     let found = false,
       i = 0;
     while (!found && i < slides.length) {
-      found = slides[i].photo.length === 2 &&
-        (slides[i].photo[0].id === fotoIdOne || slides[i].photo[1].id === fotoIdTwo) &&
-        (slides[i].photo[0].id === fotoIdTwo || slides[i].photo[1].id === fotoIdOne);
+      found = slides[i].photos.length === 2 &&
+        (slides[i].photos[0].id === fotoIdOne || slides[i].photos[1].id === fotoIdTwo) &&
+        (slides[i].photos[0].id === fotoIdTwo || slides[i].photos[1].id === fotoIdOne);
       i++;
     }
     return found;
@@ -101,21 +101,22 @@ function start() {
 
   lineReader.on('line', (line) => {
     split = line.split(' ')
-    photo = new Photo(split[0], split.splice(2), false, counter);
-    counter++;
-    photoList.push(photo);
-
+    if (split.length > 1) {
+      photo = new Photo(split[0], split.splice(2), false, counter);
+      counter++;
+      photoList.push(photo);
+    }
   })
 
+  lineReader.on('close', () => {
     console.log(photoList);
     let slides = getSlides(photoList);
     console.log(slides);
     let slidesCombinations = generateSlidesCombinations(slides);
     console.log(slidesCombinations);
-    let slideShow =  createSolution(slidesCombinations);
+    let slideShow = createSolution(slidesCombinations);
     console.log(slideShow);
-
- 
+  })
   //createFileStream(slideShow);
 }
 
@@ -128,8 +129,8 @@ function start() {
 
 function getTagsSlideOne(SlideOne, SlideTwo) {
   let counter = 0;
-  SlideOne.filter(function (e) {
-    if (SlideTwo.indexOf(e) === -1) {
+  SlideOne.mergedTags.filter(function (e) {
+    if (SlideTwo.mergedTags.indexOf(e) === -1) {
       counter++;
     }
   });
@@ -139,8 +140,8 @@ function getTagsSlideOne(SlideOne, SlideTwo) {
 
 function getTagsSlideTwo(SlideOne, SlideTwo) {
   let counter = 0
-  SlideTwo.filter(function (e) {
-    if (SlideOne.indexOf(e) === -1) {
+  SlideTwo.mergedTags.filter(function (e) {
+    if (SlideOne.mergedTags.indexOf(e) === -1) {
       counter++;
     }
   });
@@ -149,8 +150,8 @@ function getTagsSlideTwo(SlideOne, SlideTwo) {
 
 function getCommonTags(SlideOne, SlideTwo) {
   let counter = 0;
-  SlideOne.filter(function (e) {
-    if (SlideTwo.indexOf(e) !== -1) {
+  SlideOne.mergedTags.filter(function (e) {
+    if (SlideTwo.mergedTags.indexOf(e) !== -1) {
       counter++;
     }
   });
